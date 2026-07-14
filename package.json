@@ -10,12 +10,14 @@
     "test:unit": "vitest",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
+    "generate:api": "openapi-typescript doc/openapi.json -o src/api/schema.d.ts",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "openapi-fetch": "^0.17.0",
     "vue": "^3.5.38"
   },
   "devDependencies": {
@@ -34,6 +36,7 @@
     "jiti": "^2.7.0",
     "jsdom": "^29.1.1",
     "npm-run-all2": "^9.0.2",
+    "openapi-typescript": "^7.13.0",
     "oxlint": "~1.69.0",
     "prettier": "3.8.4",
     "typescript": "~6.0.0",

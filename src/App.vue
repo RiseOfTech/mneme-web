@@ -1,5 +1,7 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import SessionView from '@/views/SessionView.vue'
+</script>
 
 <template>
-  <h1>mneme-web</h1>
+  <SessionView />
 </template>
