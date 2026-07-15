@@ -12,7 +12,7 @@ onMounted(() => {
 
 <template>
   <section class="session-view">
-    <p v-if="status === 'loading'">Loading your session…</p>
+    <p v-if="status === 'loading' || status === 'idle'">Loading your session…</p>
 
     <div v-else-if="status === 'error'">
       <p>{{ error }}</p>
