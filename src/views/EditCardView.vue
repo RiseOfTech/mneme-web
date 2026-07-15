@@ -11,6 +11,7 @@ const id = route.params.id as string
 const { card, cardStatus, error, submitting, submitError, loadOne, update, remove } = useCards()
 
 const confirmingDelete = ref(false)
+const lastAction = ref<'save' | 'delete' | null>(null)
 
 onMounted(() => {
   loadOne(id)
@@ -18,11 +19,13 @@ onMounted(() => {
 
 async function onSubmit(payload: CardFormSubmitPayload) {
   if (!card.value) return
+  lastAction.value = 'save'
   const updated = await update(id, { ...payload, visibility: card.value.visibility })
   if (updated) router.push('/cards')
 }
 
 async function onConfirmDelete() {
+  lastAction.value = 'delete'
   const deleted = await remove(id)
   if (deleted) router.push('/cards')
 }
@@ -32,16 +35,18 @@ async function onConfirmDelete() {
   <section class="edit-card-view">
     <h1>Edit card</h1>
 
-    <p v-if="cardStatus === 'idle' || cardStatus === 'loading'">Loading card…</p>
+    <p v-if="cardStatus === 'idle' || cardStatus === 'loading'" class="state-message">
+      Loading card…
+    </p>
 
-    <div v-else-if="cardStatus === 'notFound'">
-      <p>Card not found.</p>
-      <RouterLink to="/cards">Back to cards</RouterLink>
+    <div v-else-if="cardStatus === 'notFound'" class="state-error">
+      <p class="state-message">Card not found.</p>
+      <RouterLink to="/cards" class="cancel-link">Back to cards</RouterLink>
     </div>
 
-    <div v-else-if="cardStatus === 'error'">
-      <p>{{ error }}</p>
-      <button type="button" @click="loadOne(id)">Retry</button>
+    <div v-else-if="cardStatus === 'error'" class="state-error">
+      <p class="state-message">{{ error }}</p>
+      <button type="button" class="retry-button" @click="loadOne(id)">Retry</button>
     </div>
 
     <template v-else-if="cardStatus === 'ready' && card">
@@ -53,22 +58,149 @@ async function onConfirmDelete() {
           imageUrl: card.imageUrl ?? '',
         }"
         :submitting="submitting"
-        :submit-error="submitError"
+        :submit-error="lastAction === 'delete' ? null : submitError"
         submit-label="Save"
         @submit="onSubmit"
       />
-      <RouterLink to="/cards">Cancel</RouterLink>
+      <RouterLink to="/cards" class="cancel-link">Cancel</RouterLink>
 
-      <div class="delete-control">
-        <button v-if="!confirmingDelete" type="button" @click="confirmingDelete = true">
+      <div class="delete-zone">
+        <button
+          v-if="!confirmingDelete"
+          type="button"
+          class="bordered-button"
+          @click="confirmingDelete = true"
+        >
           Delete
         </button>
         <template v-else>
-          <p>Delete this card?</p>
-          <button type="button" :disabled="submitting" @click="onConfirmDelete">Confirm</button>
-          <button type="button" @click="confirmingDelete = false">Cancel</button>
+          <p class="delete-prompt">Delete this card?</p>
+          <div class="delete-actions">
+            <button
+              type="button"
+              class="bordered-button"
+              :disabled="submitting"
+              @click="onConfirmDelete"
+            >
+              Confirm
+            </button>
+            <button type="button" class="bordered-button" @click="confirmingDelete = false">
+              Cancel
+            </button>
+          </div>
         </template>
+        <p v-if="lastAction === 'delete' && submitError" class="delete-error">
+          {{ submitError }}
+        </p>
       </div>
     </template>
   </section>
 </template>
+
+<style scoped>
+.edit-card-view {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  color: var(--color-ink);
+}
+
+.state-message {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-haze);
+}
+
+.state-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.retry-button {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-coating);
+  border: 1px solid var(--color-coating);
+  padding: var(--space-2) var(--space-4);
+}
+
+.retry-button:hover {
+  background: color-mix(in srgb, var(--color-coating) 10%, transparent);
+}
+
+.cancel-link {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-haze);
+}
+
+.cancel-link:hover,
+.cancel-link:focus-visible {
+  color: var(--color-coating);
+}
+
+.delete-zone {
+  width: 100%;
+  border-top: 1px solid var(--color-haze);
+  margin-top: var(--space-7);
+  padding-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.bordered-button {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  padding: var(--space-3) var(--space-6);
+}
+
+.bordered-button:hover,
+.bordered-button:focus-visible {
+  border-color: var(--color-coating);
+}
+
+.bordered-button:disabled {
+  border-color: var(--color-haze);
+  color: var(--color-haze);
+  cursor: not-allowed;
+}
+
+.delete-prompt {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+}
+
+.delete-actions {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.delete-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-ink);
+}
+</style>

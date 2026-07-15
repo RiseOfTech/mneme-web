@@ -92,7 +92,7 @@ function onSubmit() {
 
     <div class="field">
       <label for="association">Association</label>
-      <textarea id="association" v-model="association"></textarea>
+      <textarea id="association" v-model="association" rows="4"></textarea>
       <p v-if="fieldErrors.association" class="field-error">{{ fieldErrors.association }}</p>
     </div>
 
@@ -108,3 +108,85 @@ function onSubmit() {
     </div>
   </form>
 </template>
+
+<style scoped>
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: var(--measure-text);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-haze);
+}
+
+input,
+textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-haze);
+  border-radius: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  border-color: var(--color-coating);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.field-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-ink);
+}
+
+.form-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-ink);
+}
+
+.actions button[type='submit'] {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  padding: var(--space-3) var(--space-6);
+}
+
+.actions button[type='submit']:hover,
+.actions button[type='submit']:focus-visible {
+  border-color: var(--color-coating);
+}
+
+.actions button[type='submit']:disabled {
+  border-color: var(--color-haze);
+  color: var(--color-haze);
+  cursor: not-allowed;
+}
+</style>
