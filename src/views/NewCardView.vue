@@ -25,6 +25,35 @@ async function onSubmit(payload: CardFormSubmitPayload) {
       submit-label="Create"
       @submit="onSubmit"
     />
-    <RouterLink to="/cards">Cancel</RouterLink>
+    <RouterLink to="/cards" class="cancel-link">Cancel</RouterLink>
   </section>
 </template>
+
+<style scoped>
+.new-card-view {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  color: var(--color-ink);
+}
+
+.cancel-link {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-haze);
+}
+
+.cancel-link:hover,
+.cancel-link:focus-visible {
+  color: var(--color-coating);
+}
+</style>
