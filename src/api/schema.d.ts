@@ -117,24 +117,30 @@ export interface components {
                 [key: string]: unknown;
             };
         };
-        GradeRequestDto: {
-            /** @enum {string} */
-            grade: "CORRECT" | "INCORRECT";
-        };
-        CreateCardRequestDto: {
-            word: string;
-            translation: string;
-            association: string;
-            imageUrl?: string;
-            /** @enum {string} */
-            visibility?: "PRIVATE" | "PUBLIC";
-        };
         CardResponseDto: {
             /** Format: uuid */
             id?: string;
             word?: string;
             translation?: string;
             association?: string;
+            imageUrl?: string;
+            /** @enum {string} */
+            visibility?: "PRIVATE" | "PUBLIC";
+        };
+        GradeRequestDto: {
+            /** @enum {string} */
+            grade: "CORRECT" | "INCORRECT";
+        };
+        ReviewResponseDto: {
+            /** Format: int32 */
+            box?: number;
+            /** Format: date-time */
+            dueAt?: string;
+        };
+        CreateCardRequestDto: {
+            word: string;
+            translation: string;
+            association: string;
             imageUrl?: string;
             /** @enum {string} */
             visibility?: "PRIVATE" | "PUBLIC";
@@ -175,6 +181,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description Card found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CardResponseDto"];
+                };
+            };
             /** @description Card not found */
             404: {
                 headers: {
@@ -201,6 +216,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Card updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CardResponseDto"];
+                };
+            };
             /** @description Validation failed */
             400: {
                 headers: {
@@ -265,6 +289,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Review recorded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReviewResponseDto"];
+                };
+            };
             /** @description Validation failed */
             400: {
                 headers: {

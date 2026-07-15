@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import CardsView from '../CardsView.vue'
 import { client } from '@/api/client'
+import { routes } from '@/router'
 import type { components } from '@/api/schema'
 
 type CardResponseDto = components['schemas']['CardResponseDto']
@@ -26,6 +28,13 @@ function makeCard(overrides: Partial<CardResponseDto> = {}): CardResponseDto {
   }
 }
 
+async function mountAtCards() {
+  const router = createRouter({ history: createMemoryHistory(), routes })
+  router.push('/cards')
+  await router.isReady()
+  return mount(CardsView, { global: { plugins: [router] } })
+}
+
 const mockedGet = vi.mocked(client.GET)
 
 beforeEach(() => {
@@ -48,7 +57,7 @@ describe('CardsView', () => {
       response: { ok: true } as Response,
     })
 
-    const wrapper = mount(CardsView)
+    const wrapper = await mountAtCards()
     await flushPromises()
 
     expect(wrapper.findAll('li')).toHaveLength(2)
@@ -58,6 +67,9 @@ describe('CardsView', () => {
     expect(wrapper.text()).toContain('dog')
     expect(wrapper.text()).not.toContain('a cat sounds like')
     expect(wrapper.text()).not.toContain('PRIVATE')
+
+    const newCardLink = wrapper.findAll('a').find((a) => a.text() === 'New card')
+    expect(newCardLink?.attributes('href')).toBe('/cards/new')
   })
 
   it('renders the empty state for a caller with no cards', async () => {
@@ -67,11 +79,14 @@ describe('CardsView', () => {
       response: { ok: true } as Response,
     })
 
-    const wrapper = mount(CardsView)
+    const wrapper = await mountAtCards()
     await flushPromises()
 
     expect(wrapper.text()).toContain('No cards yet.')
     expect(wrapper.findAll('li')).toHaveLength(0)
+
+    const newCardLink = wrapper.findAll('a').find((a) => a.text() === 'New card')
+    expect(newCardLink?.attributes('href')).toBe('/cards/new')
   })
 
   it('renders the error state with a Retry that reloads', async () => {
@@ -81,7 +96,7 @@ describe('CardsView', () => {
       response: { ok: false } as Response,
     })
 
-    const wrapper = mount(CardsView)
+    const wrapper = await mountAtCards()
     await flushPromises()
 
     expect(wrapper.text()).toContain('Failed to load your cards')
