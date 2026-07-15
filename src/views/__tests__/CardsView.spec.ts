@@ -68,6 +68,12 @@ describe('CardsView', () => {
     expect(wrapper.text()).not.toContain('a cat sounds like')
     expect(wrapper.text()).not.toContain('PRIVATE')
 
+    const rowLinks = wrapper.findAll('li a')
+    expect(rowLinks.map((a) => a.attributes('href'))).toEqual([
+      '/cards/card-1/edit',
+      '/cards/card-2/edit',
+    ])
+
     const newCardLink = wrapper.findAll('a').find((a) => a.text() === 'New card')
     expect(newCardLink?.attributes('href')).toBe('/cards/new')
   })
