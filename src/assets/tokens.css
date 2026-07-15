@@ -1,0 +1,56 @@
+:root {
+  /* Colour — 5 tokens, plus one lighter surface. No others. */
+  --color-glass: #e7ebef;
+  --color-surface: #f7f9fa;
+  --color-ink: #16202b;
+  --color-haze: #9aa7b4;
+  --color-coating: #5b4bc4;
+  --color-flare: #e0a63c;
+
+  /* Type — 3 roles, referencing the @fontsource family names exactly. */
+  --font-display: 'Bodoni Moda Variable', 'Times New Roman', serif;
+  --font-body: 'Instrument Sans Variable', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Type scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-display: clamp(2.5rem, 5vw + 2rem, 6.5rem);
+
+  --leading-tight: 1.05;
+  --leading-normal: 1.5;
+  --tracking-wide: 0.08em;
+
+  /* Space scale, 4px base */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Layout measures */
+  --content-max-width: 40rem;
+  --content-padding-inline: clamp(1rem, 4vw, 2rem);
+  --measure-card: 24rem;
+  --measure-image: 18rem;
+  --measure-text: 32ch;
+
+  /* Motion — one duration, one easing, everywhere */
+  --motion-duration: 400ms;
+  --motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-scale-from: 1.02;
+  --blur-hidden: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration: 0ms;
+    --motion-scale-from: 1;
+  }
+}

@@ -17,6 +17,9 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@fontsource-variable/bodoni-moda": "^5.2.7",
+    "@fontsource-variable/instrument-sans": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
     "openapi-fetch": "^0.17.0",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
