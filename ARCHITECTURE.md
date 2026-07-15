@@ -87,19 +87,32 @@ var to reactive state). Deferring the UI now boxes us into nothing.
 
 ## Routing
 
-**No router in the first milestone.** `App.vue` renders `SessionView` directly.
+**`vue-router`**, added in the cards-list slice. `src/router/index.ts` creates the router
+with `createWebHistory()` (real URLs, no `#`) and these routes:
 
-In an SPA, routing is client-side: the router maps the URL path to *which component to
-render*, without a server round-trip, and manages browser history (back button, bookmarkable
-URLs). The first milestone is a single screen, so there is nothing to route.
+- `/session` (name `session`) → `SessionView`
+- `/cards` (name `cards`) → `CardsView`
+- `/` → redirect to `/session`
+- A catch-all (`/:pathMatch(.*)*`) → redirect to `/session`. No 404 page.
 
-**States are not screens.** Within a session there are several *states* — loading, showing a
-card, empty session, session finished. These are **conditional rendering** (`v-if` on state
-from the composable), not routes. A route is something worth bookmarking or linking to; an
-ephemeral step inside a one-off session is not (a URL like `/session/card/3` is meaningless).
+`App.vue` no longer renders `SessionView` directly. It renders a minimal nav
+(`<RouterLink>` to `/session` and `/cards`) plus `<RouterView />`, which renders whichever
+view the current route matches. The active link gets vue-router's automatic active class;
+one CSS rule styles it. No nav component, no layout system.
 
-**Trigger to add `vue-router`:** when card management arrives, there will be two genuinely
-distinct navigable places (`/session` and `/cards`). Add it then — one command. Not before.
+**Both views are eagerly imported — no lazy loading / route-level code splitting.** Two
+routes do not justify it (YAGNI); revisit if the app grows.
+
+**States are still not screens.** Within a session there are several *states* — loading,
+showing a card, empty session, session finished. These remain **conditional rendering**
+(`v-if` on state from the composable) inside `SessionView`, not routes. A route is
+something worth bookmarking or linking to; an ephemeral step inside a one-off session is
+not (a URL like `/session/card/3` is meaningless). The same holds for `CardsView`: its
+`useCards()` states (`loading` / `ready` / `empty` / `error`) are conditional rendering,
+not routes.
+
+`createWebHistory` requires a server-side rewrite in production so deep links resolve to
+`index.html`; that is a deployment concern, not addressed here.
 
 ## Components
 
@@ -133,14 +146,18 @@ src/
   api/
     schema.d.ts            # generated from openapi.json — do not hand-edit
     client.ts              # createClient + auth middleware (the configured gateway)
+  router/
+    index.ts               # createRouter + route table (session, cards, redirects)
   composables/
     useReviewSession.ts    # session state + logic; calls the API client
+    useCards.ts            # cards-list state + logic; calls the API client
   views/
-    SessionView.vue        # orchestrator; owns the composable
+    SessionView.vue        # orchestrator; owns useReviewSession()
+    CardsView.vue          # orchestrator; owns useCards()
   components/
     ReviewCard.vue         # one card + progressive reveal (props in, events out)
-  App.vue                  # renders SessionView directly (no router yet)
-  main.ts                  # app entry
+  App.vue                  # nav (RouterLink to /session, /cards) + RouterView
+  main.ts                  # app entry; registers the router
 ```
 
 The structure is a *consequence* of the decisions above, not a template chosen up front. It

@@ -83,8 +83,11 @@ hand-write types that duplicate generated shapes.
 - Extract a component or composable when it is reused or too large to read — not
   preemptively. (The frontend echo of the core's "no interfaces over data": don't add a
   layer whose only job is to wrap one value or one caller.)
-- **Do not add `vue-router` or Pinia** until a slice explicitly requires them; both are
-  deliberately deferred (`ARCHITECTURE.md`). No speculative routing or global store.
+- **Do not add Pinia** until a slice explicitly requires it; it remains deliberately
+  deferred (`ARCHITECTURE.md`). `vue-router` was added in the cards-list slice — do not add
+  further routes speculatively; a route must be a genuinely distinct, bookmarkable
+  navigable place, not a stand-in for in-screen state (see `ARCHITECTURE.md`'s "States are
+  still not screens"). No global store.
 - Do not invent the folder layout; it is defined in `ARCHITECTURE.md`.
 
 ### Conventions
