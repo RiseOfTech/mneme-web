@@ -37,15 +37,21 @@
   /* Layout measures */
   --content-max-width: 40rem;
   --content-padding-inline: clamp(1rem, 4vw, 2rem);
-  --measure-card: 24rem;
+  --measure-card: 28rem;
   --measure-image: 18rem;
-  --measure-text: 32ch;
+  --measure-text: 45ch;
+
+  /* Fixed row heights — the session card's reveal zones reserve these regardless of
+     whether their content is shown, so revealing a hint never moves the word above it. */
+  --row-media: 16rem;
+  --row-text: 6rem;
 
   /* Motion — one duration, one easing, everywhere */
   --motion-duration: 400ms;
   --motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-scale-from: 1.02;
   --blur-hidden: 16px;
+  --blur-image: 5px;
 }
 
 @media (prefers-reduced-motion: reduce) {

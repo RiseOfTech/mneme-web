@@ -23,15 +23,18 @@ const answerRevealed = ref(false)
   <article class="review-card">
     <h2 class="word">{{ card.word }}</h2>
 
-    <button
-      v-if="card.imageUrl"
-      type="button"
-      class="image-button"
-      aria-label="Reveal image hint"
-      @click="imageRevealed = !imageRevealed"
-    >
-      <img :src="card.imageUrl" alt="" class="image" :class="{ blurred: !imageRevealed }" />
-    </button>
+    <div class="media">
+      <button
+        v-if="card.imageUrl"
+        type="button"
+        class="image-button"
+        aria-label="Reveal image hint"
+        @click="imageRevealed = !imageRevealed"
+      >
+        <img :src="card.imageUrl" alt="" class="image" :class="{ blurred: !imageRevealed }" />
+      </button>
+      <p v-if="card.imageUrl && !imageRevealed" class="image-caption">Tap to focus</p>
+    </div>
 
     <div class="hint">
       <Transition name="resolve">
@@ -61,35 +64,42 @@ const answerRevealed = ref(false)
       </Transition>
     </div>
 
-    <Transition name="resolve">
-      <div v-if="answerRevealed" class="grade-actions">
-        <button
-          type="button"
-          class="grade-button"
-          :disabled="grading"
-          @click="emit('grade', 'INCORRECT')"
-        >
-          Incorrect
-        </button>
-        <button
-          type="button"
-          class="grade-button grade-button--correct"
-          :disabled="grading"
-          @click="emit('grade', 'CORRECT')"
-        >
-          Correct
-        </button>
-      </div>
-    </Transition>
+    <div class="grade-row">
+      <Transition name="resolve">
+        <div v-if="answerRevealed" class="grade-actions">
+          <button
+            type="button"
+            class="grade-button"
+            :disabled="grading"
+            @click="emit('grade', 'INCORRECT')"
+          >
+            Incorrect
+          </button>
+          <button
+            type="button"
+            class="grade-button"
+            :disabled="grading"
+            @click="emit('grade', 'CORRECT')"
+          >
+            Correct
+          </button>
+        </div>
+      </Transition>
+    </div>
   </article>
 </template>
 
 <style scoped>
 .review-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-rows:
+    auto
+    var(--row-media)
+    var(--row-text)
+    var(--row-text)
+    var(--space-8);
   gap: var(--space-6);
+  padding-top: var(--space-7);
   max-width: var(--measure-card);
   margin-inline: auto;
   text-align: center;
@@ -104,6 +114,12 @@ const answerRevealed = ref(false)
   overflow-wrap: break-word;
 }
 
+.media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .image-button {
   display: block;
 }
@@ -112,10 +128,12 @@ const answerRevealed = ref(false)
   display: block;
   width: var(--measure-image);
   max-width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   cursor: pointer;
   border: 1px solid var(--color-haze);
   background: var(--color-surface);
-  padding: var(--space-2);
+  padding: var(--space-3);
   filter: blur(0);
   transform: scale(1);
   transition:
@@ -124,13 +142,17 @@ const answerRevealed = ref(false)
 }
 
 .image.blurred {
-  filter: blur(var(--blur-hidden));
+  filter: blur(var(--blur-image));
   transform: scale(var(--motion-scale-from));
 }
 
-.hint,
-.answer {
-  min-height: var(--space-5);
+.image-caption {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-haze);
 }
 
 .affordance {
@@ -139,25 +161,36 @@ const answerRevealed = ref(false)
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--color-haze);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-haze);
 }
 
-.affordance:hover {
+.affordance:hover,
+.affordance:focus-visible {
   color: var(--color-coating);
+  border-bottom-color: var(--color-coating);
 }
 
 .association {
   max-width: var(--measure-text);
+  margin-inline: auto;
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   line-height: var(--leading-normal);
   color: var(--color-ink);
 }
 
 .translation {
   font-family: var(--font-body);
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   line-height: var(--leading-normal);
   color: var(--color-ink);
+}
+
+.grade-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .grade-actions {
@@ -170,16 +203,20 @@ const answerRevealed = ref(false)
   font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-ink);
+  padding: var(--space-3) var(--space-6);
   color: var(--color-ink);
 }
 
-.grade-button--correct {
-  font-weight: 500;
+.grade-button:hover,
+.grade-button:focus-visible {
+  border-color: var(--color-coating);
 }
 
 .grade-button:disabled {
+  border-color: var(--color-haze);
   color: var(--color-haze);
+  cursor: not-allowed;
 }
 
 /* The resolve signature: hidden is blurred, not absent. Revealing sharpens. */
