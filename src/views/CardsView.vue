@@ -26,5 +26,9 @@ onMounted(() => {
         <span class="translation">{{ card.translation }}</span>
       </li>
     </ul>
+
+    <RouterLink v-if="status === 'ready' || status === 'empty'" to="/cards/new"
+      >New card</RouterLink
+    >
   </section>
 </template>
