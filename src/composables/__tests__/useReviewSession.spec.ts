@@ -76,6 +76,18 @@ describe('useReviewSession', () => {
 
       expect(session.status.value).toBe('error')
     })
+
+    it('sets status to error when the client throws', async () => {
+      const client = makeStubClient({
+        GET: vi.fn<AnyAsyncFn>().mockRejectedValue(new TypeError('Failed to fetch')),
+      })
+
+      const session = useReviewSession(client)
+      await session.load()
+
+      expect(session.status.value).toBe('error')
+      expect(session.error.value).not.toBeNull()
+    })
   })
 
   describe('grade', () => {
@@ -151,6 +163,28 @@ describe('useReviewSession', () => {
       await session.grade('CORRECT')
 
       expect(session.currentCard.value).toEqual(card)
+      expect(session.error.value).not.toBeNull()
+      expect(session.grading.value).toBe(false)
+    })
+
+    it('keeps the current card and surfaces the error, clearing grading, when the client throws', async () => {
+      const card = makeCard()
+      const client = makeStubClient({
+        GET: vi.fn<AnyAsyncFn>().mockResolvedValue({
+          data: [card],
+          error: undefined,
+          response: { ok: true } as Response,
+        }),
+        POST: vi.fn<AnyAsyncFn>().mockRejectedValue(new TypeError('Failed to fetch')),
+      })
+
+      const session = useReviewSession(client)
+      await session.load()
+      await session.grade('CORRECT')
+
+      expect(session.currentCard.value).toEqual(card)
+      expect(session.index.value).toBe(0)
+      expect(session.status.value).toBe('ready')
       expect(session.error.value).not.toBeNull()
       expect(session.grading.value).toBe(false)
     })

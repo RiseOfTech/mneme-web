@@ -19,17 +19,22 @@ export function useReviewSession(client: ApiClient = defaultClient) {
     status.value = 'loading'
     error.value = null
 
-    const { data, error: err, response } = await client.GET('/v1/session/cards')
+    try {
+      const { data, error: err, response } = await client.GET('/v1/session/cards')
 
-    if (err || !response.ok) {
+      if (err || !response.ok) {
+        status.value = 'error'
+        error.value = 'Failed to load your session. Please try again.'
+        return
+      }
+
+      cards.value = data ?? []
+      index.value = 0
+      status.value = cards.value.length > 0 ? 'ready' : 'empty'
+    } catch {
       status.value = 'error'
       error.value = 'Failed to load your session. Please try again.'
-      return
     }
-
-    cards.value = data ?? []
-    index.value = 0
-    status.value = cards.value.length > 0 ? 'ready' : 'empty'
   }
 
   async function grade(grade: Grade) {
@@ -53,6 +58,8 @@ export function useReviewSession(client: ApiClient = defaultClient) {
       if (index.value >= cards.value.length) {
         status.value = 'finished'
       }
+    } catch {
+      error.value = 'Failed to submit your grade. Please try again.'
     } finally {
       grading.value = false
     }
