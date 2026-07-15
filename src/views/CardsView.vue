@@ -22,8 +22,10 @@ onMounted(() => {
 
     <ul v-else-if="status === 'ready'">
       <li v-for="card in cards" :key="card.id">
-        <span class="word">{{ card.word }}</span>
-        <span class="translation">{{ card.translation }}</span>
+        <RouterLink :to="`/cards/${card.id}/edit`">
+          <span class="word">{{ card.word }}</span>
+          <span class="translation">{{ card.translation }}</span>
+        </RouterLink>
       </li>
     </ul>
 

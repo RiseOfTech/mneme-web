@@ -147,15 +147,18 @@ src/
     schema.d.ts            # generated from openapi.json — do not hand-edit
     client.ts              # createClient + auth middleware (the configured gateway)
   router/
-    index.ts               # createRouter + route table (session, cards, redirects)
+    index.ts               # createRouter + route table (session, cards, cards/new, cards/:id/edit, redirects)
   composables/
     useReviewSession.ts    # session state + logic; calls the API client
-    useCards.ts            # cards-list state + logic; calls the API client
+    useCards.ts            # cards list + single card + mutations; calls the API client
   views/
     SessionView.vue        # orchestrator; owns useReviewSession()
     CardsView.vue          # orchestrator; owns useCards()
+    NewCardView.vue        # orchestrator; owns useCards(), renders CardForm
+    EditCardView.vue       # orchestrator; owns useCards(), renders CardForm + delete
   components/
     ReviewCard.vue         # one card + progressive reveal (props in, events out)
+    CardForm.vue           # word/translation/association/imageUrl fields (props in, events out)
   App.vue                  # nav (RouterLink to /session, /cards) + RouterView
   main.ts                  # app entry; registers the router
 ```
