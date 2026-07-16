@@ -1,28 +1,62 @@
 :root {
-  /* Colour — 5 tokens, plus one lighter surface. No others. */
-  --color-glass: #e7ebef;
-  --color-surface: #f7f9fa;
-  --color-ink: #16202b;
-  --color-haze: #9aa7b4;
-  --color-coating: #5b4bc4;
-  --color-flare: #e0a63c;
+  /* Colour — warm palette. */
+  --color-ground: #ece7de;
+  --color-ink: #1b2430;
+  --color-surface: rgba(255, 255, 255, 0.5);
+  --color-haze: #a69c89;
+  --color-haze-soft: #c9c0af;
+  --color-muted: #7a7266;
+  --color-coating: #6c5ce0;
+  --color-flare: #d89a3e;
+  --color-warning: #b5792a;
 
-  /* Type — 3 roles, referencing the @fontsource family names exactly. */
+  /* Ink-alpha borders */
+  --border-ink-divider: rgba(27, 36, 48, 0.12);
+  --border-ink-panel: rgba(27, 36, 48, 0.2);
+  --border-ink-control: rgba(27, 36, 48, 0.32);
+
+  /* Accent-alpha: rings, focus, hover fills */
+  --color-coating-ring: rgba(108, 92, 224, 0.16);
+  --color-coating-soft: rgba(108, 92, 224, 0.12);
+  --color-flare-ring: rgba(216, 154, 62, 0.22);
+  --surface-ink-hover: rgba(27, 36, 48, 0.06);
+
+  /* Card back — paper tones behind the user's image */
+  --color-card-back-start: #dad3c6;
+  --color-card-back-end: #b9af9c;
+  --color-card-back-hatch: rgba(166, 156, 137, 0.35);
+
+  /* Fixed noise overlay */
+  --overlay-noise: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjxmaWx0ZXIgaWQ9J24nPjxmZVR1cmJ1bGVuY2UgdHlwZT0nZnJhY3RhbE5vaXNlJyBiYXNlRnJlcXVlbmN5PScwLjg1JyBudW1PY3RhdmVzPScyJyBzdGl0Y2hUaWxlcz0nc3RpdGNoJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nMTAwJScgZmlsdGVyPSd1cmwoJTIzbiknLz48L3N2Zz4=');
+  --overlay-noise-opacity: 0.5;
+
+  /* Radius — 12–14px on buttons and inputs. */
+  --radius-sm: 12px;
+  --radius-md: 14px;
+
+  /* Type — 3 font roles, referencing the @fontsource family names exactly. */
   --font-display: 'Bodoni Moda Variable', 'Times New Roman', serif;
   --font-body: 'Instrument Sans Variable', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   /* Type scale */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.75rem;
-  --text-display: clamp(2.5rem, 5vw + 2rem, 6.5rem);
+  --text-eyebrow: 0.6875rem; /* 11px — every mono eyebrow/label */
+  --text-xs: 0.75rem; /* 12px — small mono controls */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-md: 1.0625rem; /* 17px — field text, list translation */
+  --text-lg: 1.1875rem; /* 19px — association prose */
+  --text-xl: 1.625rem; /* 26px — list row word */
+  --text-2xl: 2rem; /* 32px — revealed translation */
+  --text-heading-sm: 2.125rem; /* 34px — error heading, form titles */
+  --text-heading: 2.375rem; /* 38px — empty/finished headings */
+  --text-word: clamp(2.25rem, 5vw + 1.5rem, 4rem); /* card front word */
 
   --leading-tight: 1.05;
   --leading-normal: 1.5;
-  --tracking-wide: 0.08em;
+  --tracking-normal: 0.1em;
+  --tracking-wide: 0.14em;
+  --tracking-hover: 0.18em;
 
   /* Space scale, 4px base */
   --space-1: 0.25rem;
@@ -35,28 +69,48 @@
   --space-8: 4rem;
 
   /* Layout measures */
-  --content-max-width: 40rem;
-  --content-padding-inline: clamp(1rem, 4vw, 2rem);
   --measure-card: 28rem;
-  --measure-image: 18rem;
   --measure-text: 45ch;
+  --measure-form: 35rem; /* 560px — form screens */
+  --measure-list: 45rem; /* 720px — cards list */
+
+  /* Screen padding — mirrors the design reference's per-screen values */
+  --screen-padding-inline: 2.5rem; /* 40px — shared by nav, form, and list screens */
+  --screen-padding-top: 1.25rem; /* 20px — form & list top padding */
+  --screen-padding-bottom-form: 6.25rem; /* 100px */
+  --screen-padding-bottom-list: 5rem; /* 80px */
+
+  /* Nav */
+  --nav-padding-block: 1.75rem; /* 28px */
+  --nav-gap: 0.875rem; /* 14px */
+  --nav-underline-gap: 0.1875rem; /* 3px */
+  --text-nav: 0.8125rem; /* 13px */
+  --tracking-nav: 0.12em;
+
+  /* Field padding */
+  --field-padding-block: 0.9375rem; /* 15px */
+  --field-padding-inline: 1.125rem; /* 18px */
 
   /* Fixed row heights — the session card's reveal zones reserve these regardless of
-     whether their content is shown, so revealing a hint never moves the word above it. */
-  --row-media: 16rem;
+     whether their content is shown, so revealing a hint never moves the card above it. */
   --row-text: 6rem;
 
-  /* Motion — one duration, one easing, everywhere */
+  /* Motion — one duration, one easing, everywhere the shared soft-in reveal is used */
   --motion-duration: 400ms;
   --motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-scale-from: 1.02;
+  --motion-lift: 0.5rem;
   --blur-hidden: 16px;
-  --blur-image: 5px;
+
+  /* Motion — the card flip and the loading pulse have their own durations */
+  --motion-flip-duration: 160ms;
+  --motion-pulse-duration: 1.8s;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-duration: 0ms;
-    --motion-scale-from: 1;
+    --motion-lift: 0px;
+    --motion-flip-duration: 0ms;
+    --motion-pulse-duration: 0ms;
   }
 }

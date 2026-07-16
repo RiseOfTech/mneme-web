@@ -22,14 +22,17 @@ onMounted(() => {
 
     <p v-else-if="status === 'empty'" class="state-message">No cards yet.</p>
 
-    <ul v-else-if="status === 'ready'" class="card-list">
-      <li v-for="card in cards" :key="card.id" class="card-row">
-        <RouterLink :to="`/cards/${card.id}/edit`" class="card-link">
-          <span class="word">{{ card.word }}</span>
-          <span class="translation">{{ card.translation }}</span>
-        </RouterLink>
-      </li>
-    </ul>
+    <template v-else-if="status === 'ready'">
+      <p class="count-eyebrow">{{ cards.length }} cards</p>
+      <ul class="card-list">
+        <li v-for="card in cards" :key="card.id" class="card-row">
+          <RouterLink :to="`/cards/${card.id}/edit`" class="card-link">
+            <span class="word">{{ card.word }}</span>
+            <span class="translation">{{ card.translation }}</span>
+          </RouterLink>
+        </li>
+      </ul>
+    </template>
 
     <RouterLink
       v-if="status === 'ready' || status === 'empty'"
@@ -46,13 +49,27 @@ onMounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-5);
+  width: 100%;
+  max-width: var(--measure-list);
+  margin-inline: auto;
+  padding: var(--screen-padding-top) var(--screen-padding-inline)
+    var(--screen-padding-bottom-list);
 }
 
 .state-message {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-eyebrow);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-haze);
+}
+
+.count-eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-normal);
   color: var(--color-haze);
 }
 
@@ -67,14 +84,16 @@ onMounted(() => {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-coating);
-  border: 1px solid var(--color-coating);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-4);
 }
 
-.retry-button:hover {
-  background: color-mix(in srgb, var(--color-coating) 10%, transparent);
+.retry-button:hover,
+.retry-button:focus-visible {
+  background: var(--surface-ink-hover);
 }
 
 .card-list {
@@ -84,47 +103,48 @@ onMounted(() => {
   padding: 0;
 }
 
-.card-row + .card-row {
-  border-top: 1px solid var(--color-haze);
+.card-row {
+  border-bottom: 1px solid var(--border-ink-divider);
 }
 
 .card-link {
   display: flex;
   align-items: baseline;
-  gap: var(--space-3);
-  padding: var(--space-4) 0;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
 }
 
 .card-link:hover,
 .card-link:focus-visible {
-  background: color-mix(in srgb, var(--color-coating) 10%, transparent);
+  opacity: 0.7;
 }
 
 .word {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-xl);
   color: var(--color-ink);
 }
 
 .translation {
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   color: var(--color-haze);
 }
 
 .new-card-action {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   color: var(--color-ink);
   border: 1px solid var(--color-ink);
+  border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-6);
 }
 
 .new-card-action:hover,
 .new-card-action:focus-visible {
-  border-color: var(--color-coating);
+  background: var(--surface-ink-hover);
 }
 </style>

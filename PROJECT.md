@@ -44,8 +44,8 @@ each card the interaction is a **progressive reveal** — the user tries to reca
 seeing the answer:
 
 1. **Prompt.** Show only the word. The user tries to recall the translation from memory.
-2. **Hint 1 — the image, blurred.** If stuck, the user taps the image to un-blur it — a
-   visual nudge before the full answer.
+2. **Hint 1 — the image.** The card carries the user's image on its back; tapping the card
+   turns it over, and tapping again turns it back.
 3. **Hint 2 — the association.** If still stuck, the user reveals the association text —
    their own mnemonic hook, the intended path back to the word.
 4. **Answer.** The user reveals the translation and sees whether they were right.

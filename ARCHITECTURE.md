@@ -114,6 +114,52 @@ not routes.
 `createWebHistory` requires a server-side rewrite in production so deep links resolve to
 `index.html`; that is a deployment concern, not addressed here.
 
+## Design system
+
+Values live in `src/assets/tokens.css` as CSS custom properties; components reference tokens
+only — no raw hex, `rgba()`, duration, or spacing literal in a `.vue` file.
+
+**Palette — warm ground.** `--color-ground` (page background), `--color-ink` (text, and the
+active nav link's underline), `--color-surface` (translucent input/panel fill),
+`--color-haze` / `--color-haze-soft` (secondary text, dividers, the inactive nav link),
+`--color-muted` (secondary prose on state screens), `--color-coating` (interactive: focus,
+the form's focus ring, the solid lens ring — never the nav), `--color-flare` (reveal
+accents, the loading ring), `--color-warning` (validation messages). The active nav link is
+marked by an ink underline, not a colour change to coating; nav has no violet in it.
+Borders on ink use alpha tokens (`--border-ink-divider`, `--border-ink-panel`,
+`--border-ink-control`) rather than a solid colour, so dividers and outlines read as part of
+the ground rather than as separate objects.
+
+**Type.** Three roles: `--font-display` (Bodoni Moda — the card word, state headings in
+italic, list row words), `--font-body` (Instrument Sans — association prose in italic,
+translation), `--font-mono` (IBM Plex Mono — every small label and control, uppercase,
+letterspaced). A shared `--text-eyebrow` token is used for every mono label across the app
+(position counter, field labels, list count) so they stay visually consistent; the nav uses
+its own slightly larger `--text-nav` (13px) / `--tracking-nav` size, matching the reference.
+
+**Radius is allowed** (`--radius-sm` 12px on buttons/actions, `--radius-md` 14px on inputs).
+This reverses the "no radius" decision from the original visual-foundation slice — the
+refreshed design uses soft geometry deliberately.
+
+**The ring motif.** Two concentric rings sit behind the session card's word on its front
+face: a solid `--color-coating`-tinted circle rotated `-4deg`, a dashed `--color-flare`-
+tinted circle rotated `6deg`. They are absolutely positioned, sized relative to the card
+(not the viewport, so they scale with its responsive `max-width`), `pointer-events: none`,
+and clipped by the card's own bounds — they never affect layout or intercept clicks.
+
+**Reveal motion.** The original "resolve from blur, never fade" signature (hidden state is
+blurred, not absent; revealing sharpens it) is retired. It's replaced by two distinct
+motions:
+
+- **The image hint is a flip, not a blur.** See `ReviewCard` below.
+- **Text reveals (association, translation, the grade actions) use a shared `softIn`
+  keyframe** — opacity + blur + a small lift, driven by the existing `--motion-duration` /
+  `--motion-easing` tokens — applied via one `Transition` per reveal. There is no longer a
+  separate flare-coloured special case for the answer.
+
+All motion (the flip squeeze, `softIn`, the loading ring's pulse) is neutralised under
+`prefers-reduced-motion: reduce` by zeroing the relevant duration/lift tokens.
+
 ## Components
 
 Minimal split for the first milestone:
@@ -121,11 +167,12 @@ Minimal split for the first milestone:
 - **`SessionView`** — the orchestrator (the "controller"). Owns `useReviewSession()`,
   decides what to show based on session state (loading / card / empty / finished), and
   handles advancing to the next card.
-- **`ReviewCard`** — one card with the progressive reveal: word, blurred image (tap to
-  un-blur), association (hidden → revealed), translation (hidden → revealed), and the
+- **`ReviewCard`** — one card with the progressive reveal: a flippable surface (front: the
+  word; back: the card's image, tap to turn over — only when the card has an image),
+  association (hidden → revealed), translation (hidden → revealed), and the
   correct/incorrect actions.
 
-**Deliberately not split further.** The grade buttons and the blurred image are not their own
+**Deliberately not split further.** The grade buttons and the flip surface are not their own
 components yet. Extract a component when it is reused or grows too large to read — not
 preemptively.
 

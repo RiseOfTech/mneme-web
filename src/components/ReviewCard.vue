@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { components } from '@/api/schema'
 
 type SessionCardDto = components['schemas']['SessionCardDto']
 type Grade = components['schemas']['GradeRequestDto']['grade']
 
-defineProps<{
+const props = defineProps<{
   card: SessionCardDto
   grading: boolean
 }>()
@@ -14,58 +14,84 @@ const emit = defineEmits<{
   grade: [value: Grade]
 }>()
 
-const imageRevealed = ref(false)
+const hasImage = computed(() => !!props.card.imageUrl)
+const flipped = ref(false)
+const flipping = ref(false)
 const associationRevealed = ref(false)
 const answerRevealed = ref(false)
+
+function toggleFlip() {
+  flipped.value = !flipped.value
+  flipping.value = true
+}
+
+function onFlipAnimationEnd() {
+  flipping.value = false
+}
 </script>
 
 <template>
   <article class="review-card">
-    <h2 class="word">{{ card.word }}</h2>
-
-    <div class="media">
-      <button
-        v-if="card.imageUrl"
-        type="button"
-        class="image-button"
-        aria-label="Reveal image hint"
-        @click="imageRevealed = !imageRevealed"
-      >
-        <img :src="card.imageUrl" alt="" class="image" :class="{ blurred: !imageRevealed }" />
-      </button>
-      <p v-if="card.imageUrl && !imageRevealed" class="image-caption">Tap to focus</p>
-    </div>
+    <component
+      :is="hasImage ? 'button' : 'div'"
+      class="card-surface"
+      :class="{ flipping }"
+      v-bind="
+        hasImage
+          ? {
+              type: 'button',
+              'aria-label': flipped ? 'Show word' : 'Show image',
+              onClick: toggleFlip,
+            }
+          : {}
+      "
+      @animationend="onFlipAnimationEnd"
+    >
+      <div v-if="!flipped" class="card-front">
+        <span class="ring ring-solid" aria-hidden="true"></span>
+        <span class="ring ring-dashed" aria-hidden="true"></span>
+        <h2 class="word">{{ card.word }}</h2>
+      </div>
+      <div v-else class="card-back">
+        <img :src="card.imageUrl" alt="" class="card-image" />
+      </div>
+    </component>
+    <p v-if="hasImage" class="flip-hint">
+      {{ flipped ? 'Tap to see the word' : 'Tap to see the image' }}
+    </p>
 
     <div class="hint">
-      <Transition name="resolve">
-        <button
-          v-if="!associationRevealed"
-          type="button"
-          class="affordance"
-          @click="associationRevealed = true"
-        >
-          Show association
-        </button>
-        <p v-else class="association">{{ card.association }}</p>
+      <p v-if="associationRevealed" class="eyebrow">Association</p>
+      <button
+        v-if="!associationRevealed"
+        type="button"
+        class="affordance"
+        @click="associationRevealed = true"
+      >
+        Show association
+      </button>
+      <Transition name="soft-in">
+        <p v-if="associationRevealed" class="association">{{ card.association }}</p>
       </Transition>
     </div>
 
     <div class="answer">
-      <Transition name="resolve-flare">
-        <button
-          v-if="!answerRevealed"
-          type="button"
-          class="affordance"
-          @click="answerRevealed = true"
-        >
-          Show answer
-        </button>
-        <p v-else class="translation">{{ card.translation }}</p>
+      <p v-if="answerRevealed" class="eyebrow">Translation</p>
+      <button
+        v-if="!answerRevealed"
+        type="button"
+        class="affordance"
+        @click="answerRevealed = true"
+      >
+        Show answer
+      </button>
+      <Transition name="soft-in">
+        <p v-if="answerRevealed" class="translation">{{ card.translation }}</p>
       </Transition>
     </div>
 
     <div class="grade-row">
-      <Transition name="resolve">
+      <Transition name="soft-in">
         <div v-if="answerRevealed" class="grade-actions">
           <button
             type="button"
@@ -91,67 +117,128 @@ const answerRevealed = ref(false)
 
 <style scoped>
 .review-card {
-  display: grid;
-  grid-template-rows:
-    auto
-    var(--row-media)
-    var(--row-text)
-    var(--row-text)
-    var(--space-8);
-  gap: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
   padding-top: var(--space-7);
   max-width: var(--measure-card);
   margin-inline: auto;
   text-align: center;
 }
 
+.card-surface {
+  position: relative;
+  width: 360px;
+  max-width: 78vw;
+  height: 250px;
+  overflow: hidden;
+  transform: scaleX(1);
+}
+
+.card-surface.flipping {
+  animation: flip-squeeze var(--motion-flip-duration) ease;
+}
+
+@keyframes flip-squeeze {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.06);
+  }
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-back {
+  border: 1px solid var(--border-ink-panel);
+  background:
+    repeating-linear-gradient(
+      52deg,
+      var(--color-card-back-hatch) 0px,
+      var(--color-card-back-hatch) 2px,
+      transparent 2px,
+      transparent 10px
+    ),
+    linear-gradient(160deg, var(--color-card-back-start), var(--color-card-back-end));
+}
+
+.card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ring-solid {
+  width: 78%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  border: 1px solid var(--color-coating-ring);
+}
+
+.ring-dashed {
+  width: 60%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(6deg);
+  border: 1px dashed var(--color-flare-ring);
+}
+
 .word {
+  position: relative;
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-display);
+  font-weight: 600;
+  font-size: var(--text-word);
   line-height: var(--leading-tight);
   color: var(--color-ink);
+  padding-inline: var(--space-4);
   overflow-wrap: break-word;
 }
 
-.media {
+.flip-hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-haze);
+}
+
+.hint,
+.answer {
+  min-height: var(--row-text);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
-.image-button {
-  display: block;
-}
-
-.image {
-  display: block;
-  width: var(--measure-image);
-  max-width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  cursor: pointer;
-  border: 1px solid var(--color-haze);
-  background: var(--color-surface);
-  padding: var(--space-3);
-  filter: blur(0);
-  transform: scale(1);
-  transition:
-    filter var(--motion-duration) var(--motion-easing),
-    transform var(--motion-duration) var(--motion-easing);
-}
-
-.image.blurred {
-  filter: blur(var(--blur-image));
-  transform: scale(var(--motion-scale-from));
-}
-
-.image-caption {
-  margin-top: var(--space-2);
+.eyebrow {
+  margin: 0;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-eyebrow);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   color: var(--color-haze);
 }
 
@@ -160,30 +247,35 @@ const answerRevealed = ref(false)
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  color: var(--color-haze);
+  color: var(--color-ink);
   padding-bottom: var(--space-1);
-  border-bottom: 1px solid var(--color-haze);
+  border-bottom: 1px solid var(--border-ink-control);
+  transition:
+    letter-spacing var(--motion-duration) var(--motion-easing),
+    border-bottom-color var(--motion-duration) var(--motion-easing);
 }
 
 .affordance:hover,
 .affordance:focus-visible {
-  color: var(--color-coating);
-  border-bottom-color: var(--color-coating);
+  letter-spacing: var(--tracking-hover);
+  border-bottom-color: var(--color-ink);
 }
 
 .association {
   max-width: var(--measure-text);
   margin-inline: auto;
   font-family: var(--font-body);
+  font-style: italic;
   font-size: var(--text-lg);
   line-height: var(--leading-normal);
   color: var(--color-ink);
 }
 
 .translation {
+  margin: 0;
   font-family: var(--font-body);
-  font-size: var(--text-xl);
-  line-height: var(--leading-normal);
+  font-weight: 500;
+  font-size: var(--text-2xl);
   color: var(--color-ink);
 }
 
@@ -191,26 +283,32 @@ const answerRevealed = ref(false)
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: var(--space-8);
 }
 
 .grade-actions {
   display: flex;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
 .grade-button {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   border: 1px solid var(--color-ink);
-  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-6);
   color: var(--color-ink);
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing),
+    color var(--motion-duration) var(--motion-easing);
 }
 
 .grade-button:hover,
 .grade-button:focus-visible {
-  border-color: var(--color-coating);
+  background: var(--surface-ink-hover);
 }
 
 .grade-button:disabled {
@@ -219,39 +317,27 @@ const answerRevealed = ref(false)
   cursor: not-allowed;
 }
 
-/* The resolve signature: hidden is blurred, not absent. Revealing sharpens. */
-.resolve-enter-active {
-  transition:
-    filter var(--motion-duration) var(--motion-easing),
-    transform var(--motion-duration) var(--motion-easing),
-    color var(--motion-duration) var(--motion-easing);
-}
-
-.resolve-enter-from {
-  filter: blur(var(--blur-hidden));
-  transform: scale(var(--motion-scale-from));
-  color: var(--color-haze);
-}
-
-.resolve-flare-enter-active {
-  animation: resolve-flare var(--motion-duration) var(--motion-easing) both;
-}
-
-@keyframes resolve-flare {
-  0% {
+/* The soft-in signature: hidden reveals arrive by opacity, blur, and a small lift. */
+@keyframes soft-in {
+  from {
+    opacity: 0;
     filter: blur(var(--blur-hidden));
-    transform: scale(var(--motion-scale-from));
-    color: var(--color-haze);
+    transform: translateY(var(--motion-lift));
   }
-  55% {
+  to {
+    opacity: 1;
     filter: blur(0);
-    transform: scale(1);
-    color: var(--color-flare);
+    transform: translateY(0);
   }
-  100% {
-    filter: blur(0);
-    transform: scale(1);
-    color: var(--color-ink);
-  }
+}
+
+.soft-in-enter-active {
+  animation: soft-in var(--motion-duration) var(--motion-easing) both;
+}
+
+/* The disappearing control is never animated out — it is removed instantly. */
+.soft-in-leave-active {
+  animation: none;
+  transition: none;
 }
 </style>
