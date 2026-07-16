@@ -103,20 +103,26 @@ async function onConfirmDelete() {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-6);
+  max-width: var(--measure-form);
+  margin-inline: auto;
+  padding: var(--screen-padding-top) var(--screen-padding-inline)
+    var(--screen-padding-bottom-form);
 }
 
 h1 {
   font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-style: italic;
+  font-weight: 600;
+  font-size: var(--text-heading-sm);
   line-height: var(--leading-tight);
   color: var(--color-ink);
 }
 
 .state-message {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-eyebrow);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   color: var(--color-haze);
 }
 
@@ -131,32 +137,38 @@ h1 {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-coating);
-  border: 1px solid var(--color-coating);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-4);
 }
 
-.retry-button:hover {
-  background: color-mix(in srgb, var(--color-coating) 10%, transparent);
+.retry-button:hover,
+.retry-button:focus-visible {
+  background: var(--surface-ink-hover);
 }
 
 .cancel-link {
+  cursor: pointer;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-haze);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--border-ink-control);
+  padding-bottom: var(--space-1);
 }
 
 .cancel-link:hover,
 .cancel-link:focus-visible {
-  color: var(--color-coating);
+  color: var(--color-ink);
+  border-bottom-color: var(--color-ink);
 }
 
 .delete-zone {
   width: 100%;
-  border-top: 1px solid var(--color-haze);
+  border-top: 1px solid var(--border-ink-divider);
   margin-top: var(--space-7);
   padding-top: var(--space-6);
   display: flex;
@@ -167,17 +179,18 @@ h1 {
 
 .bordered-button {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   color: var(--color-ink);
   border: 1px solid var(--color-ink);
+  border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-6);
 }
 
 .bordered-button:hover,
 .bordered-button:focus-visible {
-  border-color: var(--color-coating);
+  background: var(--surface-ink-hover);
 }
 
 .bordered-button:disabled {
@@ -188,7 +201,7 @@ h1 {
 
 .delete-prompt {
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   color: var(--color-ink);
 }
 
@@ -200,7 +213,7 @@ h1 {
 .delete-error {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-ink);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-warning);
 }
 </style>

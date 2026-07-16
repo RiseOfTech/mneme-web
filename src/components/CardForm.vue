@@ -114,7 +114,6 @@ form {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  max-width: var(--measure-text);
 }
 
 .field {
@@ -126,9 +125,9 @@ form {
 label {
   display: block;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-eyebrow);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   color: var(--color-haze);
 }
 
@@ -136,52 +135,56 @@ input,
 textarea {
   width: 100%;
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   line-height: var(--leading-normal);
   color: var(--color-ink);
   background: var(--color-surface);
-  border: 1px solid var(--color-haze);
-  border-radius: 0;
-  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-ink-panel);
+  border-radius: var(--radius-md);
+  padding: var(--field-padding-block) var(--field-padding-inline);
+  transition: border-color var(--motion-duration) var(--motion-easing);
 }
 
 input:focus-visible,
 textarea:focus-visible {
   border-color: var(--color-coating);
+  box-shadow: 0 0 0 3px var(--color-coating-soft);
 }
 
 textarea {
+  font-style: italic;
   resize: vertical;
 }
 
 .field-error {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-ink);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-warning);
 }
 
 .form-error {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-ink);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-warning);
 }
 
 .actions button[type='submit'] {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   color: var(--color-ink);
   border: 1px solid var(--color-ink);
-  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-6);
 }
 
 .actions button[type='submit']:hover,
 .actions button[type='submit']:focus-visible {
-  border-color: var(--color-coating);
+  background: var(--surface-ink-hover);
 }
 
 .actions button[type='submit']:disabled {

@@ -49,7 +49,7 @@ describe('SessionView', () => {
 
     const wrapper = mount(SessionView)
     await nextTick()
-    expect(wrapper.text()).toContain('Loading')
+    expect(wrapper.text()).toContain('Fetching due cards')
 
     resolveGet({ data: [makeCard()], error: undefined, response: { ok: true } as Response })
     await flushPromises()

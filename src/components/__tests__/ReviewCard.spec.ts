@@ -19,21 +19,49 @@ function makeCard(overrides: Partial<SessionCardDto> = {}): SessionCardDto {
 }
 
 describe('ReviewCard', () => {
-  it('shows the word, hides translation and association, and blurs the image initially', () => {
+  it('shows the word on the front, hides translation and association, and renders no image initially', () => {
     const card = makeCard()
     const wrapper = mount(ReviewCard, { props: { card, grading: false } })
 
     expect(wrapper.text()).toContain(card.word)
     expect(wrapper.text()).not.toContain(card.translation)
     expect(wrapper.text()).not.toContain(card.association)
-    expect(wrapper.find('img').classes()).toContain('blurred')
+    expect(wrapper.find('img').exists()).toBe(false)
   })
 
-  it('renders no image element when the card has no imageUrl', () => {
+  it('flips to the image on tap, and back to the word on a second tap', async () => {
+    const card = makeCard()
+    const wrapper = mount(ReviewCard, { props: { card, grading: false } })
+
+    const surface = wrapper.find('button[aria-label]')
+    expect(surface.exists()).toBe(true)
+    expect(wrapper.text()).toContain(card.word)
+
+    await surface.trigger('click')
+
+    expect(wrapper.find('img').attributes('src')).toBe(card.imageUrl)
+    expect(wrapper.text()).not.toContain(card.word)
+
+    await surface.trigger('click')
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.text()).toContain(card.word)
+  })
+
+  it('does not flip and renders no image for a card with no imageUrl', async () => {
     const card = makeCard({ imageUrl: undefined })
     const wrapper = mount(ReviewCard, { props: { card, grading: false } })
 
     expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label]').exists()).toBe(false)
+
+    const surface = wrapper.find('.card-surface')
+    expect(surface.element.tagName).toBe('DIV')
+
+    await surface.trigger('click')
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.text()).toContain(card.word)
   })
 
   it('has no grade actions before the answer is revealed', () => {

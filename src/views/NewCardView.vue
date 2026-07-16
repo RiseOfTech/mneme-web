@@ -35,25 +35,35 @@ async function onSubmit(payload: CardFormSubmitPayload) {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-6);
+  max-width: var(--measure-form);
+  margin-inline: auto;
+  padding: var(--screen-padding-top) var(--screen-padding-inline)
+    var(--screen-padding-bottom-form);
 }
 
 h1 {
   font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-style: italic;
+  font-weight: 600;
+  font-size: var(--text-heading-sm);
   line-height: var(--leading-tight);
   color: var(--color-ink);
 }
 
 .cancel-link {
+  cursor: pointer;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-haze);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--border-ink-control);
+  padding-bottom: var(--space-1);
 }
 
 .cancel-link:hover,
 .cancel-link:focus-visible {
-  color: var(--color-coating);
+  color: var(--color-ink);
+  border-bottom-color: var(--color-ink);
 }
 </style>
