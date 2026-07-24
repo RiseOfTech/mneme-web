@@ -26,6 +26,8 @@ async function onSignOut() {
         <span class="nav-separator" aria-hidden="true">·</span>
         <RouterLink to="/cards">Cards</RouterLink>
         <span class="nav-separator" aria-hidden="true">·</span>
+        <RouterLink to="/profile">Profile</RouterLink>
+        <span class="nav-separator" aria-hidden="true">·</span>
         <button type="button" class="sign-out-button" @click="onSignOut">Sign out</button>
       </nav>
       <main class="content">

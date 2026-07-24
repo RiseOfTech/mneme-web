@@ -5,6 +5,7 @@ import NewCardView from '@/views/NewCardView.vue'
 import EditCardView from '@/views/EditCardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 import { isAuthenticated, session } from '@/auth/session'
 import { sessionReady } from '@/auth/refresh'
 
@@ -29,6 +30,7 @@ export const routes: RouteRecordRaw[] = [
     component: EditCardView,
     meta: { requiresAuth: true },
   },
+  { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
   { path: '/login', name: 'login', component: LoginView },
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/', redirect: '/session' },

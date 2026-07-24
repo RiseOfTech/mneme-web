@@ -72,4 +72,13 @@ describe('authGuard', () => {
 
     expect(router.currentRoute.value.name).toBe('login')
   })
+
+  it('redirects an anonymous visit to /profile to /login', async () => {
+    const router = makeGuardedTestRouter()
+    router.push('/profile')
+    await router.isReady()
+
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe('/profile')
+  })
 })

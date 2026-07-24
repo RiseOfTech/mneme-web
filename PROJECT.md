@@ -70,6 +70,7 @@ This proves the client↔core loop works:
   (email + password), obtaining a short-lived JWT held in memory.
 - Fetch the due cards, run the progressive reveal above, submit a grade, and advance
   until the session is empty.
+- View and edit a profile (nickname only) once signed in.
 
 (The detailed slice spec lives with its agent task when we write it — not in this doc.)
 

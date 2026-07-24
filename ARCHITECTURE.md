@@ -143,17 +143,27 @@ calls from anywhere else are forbidden (enforced by convention, not by types). I
   session either way, and can never throw or surface an error — a cold load with no
   cookie is the normal signed-out case. `sessionReady` is what the router guard awaits.
 
-**Retry-once on the core client.** `client.ts` (never `authClient.ts` — its only
-token-bearing endpoint, profile, is a later slice, and a `401` from `/v1/auth/*` must
-never trigger a refresh; a failed login or failed refresh is a final answer) registers a
-middleware with both `onRequest` and `onResponse`. It matters that it's both: by the time
-`onResponse` sees a request, `fetch()` has already consumed its body stream, so
-`onRequest` clones the request *before* it's sent and stashes the clone (keyed by the
-request object itself, so nothing needs manual cleanup). On a `401`, `onResponse` calls
-`refreshAccessToken()`; if it returns a token, the stashed clone is reissued once with the
-new `Authorization` header, and that response replaces the `401`. A request that has
-already been retried carries a marker header, so it is never retried a second time — a
-401 → refresh → 401 loop is a bug, not a recovery path.
+**Retry-once, shared by both clients.** The retry middleware is a factory,
+`createRetryMiddleware()` in `src/api/retryMiddleware.ts`, registering a middleware with both
+`onRequest` and `onResponse`. It matters that it's both: by the time `onResponse` sees a
+request, `fetch()` has already consumed its body stream, so `onRequest` clones the request
+*before* it's sent and stashes the clone (keyed by the request object itself, so nothing
+needs manual cleanup). On a `401`, `onResponse` calls `refreshAccessToken()`; if it returns a
+token, the stashed clone is reissued once with the new `Authorization` header, and that
+response replaces the `401`. A request that has already been retried carries a marker
+header, so it is never retried a second time — a 401 → refresh → 401 loop is a bug, not a
+recovery path.
+
+`client.ts` uses the factory with no exclusion. `authClient.ts` — once profile was its first
+token-bearing endpoint — uses it with one hard exclusion: a request whose path starts with
+`/v1/auth/` never triggers a refresh or a retry, because a failed login or a failed refresh
+is a final answer, and refreshing in response to a failed refresh would recurse. This gives
+`retryMiddleware.ts` (which calls `refreshAccessToken`, from `refresh.ts`) and `refresh.ts`
+(which calls `authClient` to POST `/v1/auth/refresh`) a genuine module cycle:
+`authClient.ts → retryMiddleware.ts → refresh.ts → authClient.ts`. It's safe because every
+cross-reference is only used inside a function body — invoked long after both modules have
+finished evaluating — never at module top-level; the same reasoning already covers the
+pre-existing `client.ts → refresh.ts → authClient.ts` chain.
 
 **The router guard awaits startup restore.** `router/index.ts`'s `authGuard` is async: if
 `status === 'resolving'` it awaits `sessionReady` before applying the existing
@@ -177,6 +187,7 @@ with `createWebHistory()` (real URLs, no `#`) and these routes:
 - `/cards` (name `cards`, `meta: { requiresAuth: true }`) → `CardsView`
 - `/cards/new`, `/cards/:id/edit` (`meta: { requiresAuth: true }`) → `NewCardView`,
   `EditCardView`
+- `/profile` (name `profile`, `meta: { requiresAuth: true }`) → `ProfileView`
 - `/login` (name `login`, public) → `LoginView`
 - `/register` (name `register`, public) → `RegisterView`
 - `/` → redirect to `/session`
@@ -289,8 +300,9 @@ src/
   api/
     schema.d.ts            # generated from openapi.json — do not hand-edit
     authSchema.d.ts        # generated from doc/auth-openapi.json — do not hand-edit
-    client.ts              # createClient + auth middleware (the configured gateway) — core
-    authClient.ts          # createClient + auth middleware, credentials: 'include' — auth
+    client.ts              # createClient + retry middleware (the configured gateway) — core
+    authClient.ts          # createClient + retry middleware, credentials: 'include' — auth
+    retryMiddleware.ts     # createRetryMiddleware() factory — shared by both clients
   auth/
     session.ts             # module-scoped reactive auth state (access token, isAuthenticated)
     refresh.ts             # single-flight refresh, retry-once support, startup restore
@@ -300,12 +312,14 @@ src/
     useReviewSession.ts    # session state + logic; calls the API client
     useCards.ts            # cards list + single card + mutations; calls the API client
     useAuth.ts             # login/logout operations over the session module
+    useProfile.ts          # profile load/save; calls the auth client
   views/
     SessionView.vue        # orchestrator; owns useReviewSession()
     CardsView.vue          # orchestrator; owns useCards()
     NewCardView.vue        # orchestrator; owns useCards(), renders CardForm
     EditCardView.vue       # orchestrator; owns useCards(), renders CardForm + delete
     LoginView.vue          # orchestrator; owns useAuth(), email/password form
+    ProfileView.vue        # orchestrator; owns useProfile(), nickname form
   components/
     ReviewCard.vue         # one card + progressive reveal (props in, events out)
     CardForm.vue           # word/translation/association/imageUrl fields (props in, events out)

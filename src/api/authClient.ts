@@ -1,20 +1,18 @@
-import createClient, { type Middleware } from 'openapi-fetch'
+import createClient from 'openapi-fetch'
 import type { paths } from './authSchema'
-import { getAccessToken } from '@/auth/session'
+import { createRetryMiddleware } from './retryMiddleware'
 
 const baseUrl = import.meta.env.VITE_AUTH_BASE_URL ?? 'http://localhost:8081'
 
-const authMiddleware: Middleware = {
-  onRequest({ request }) {
-    const token = getAccessToken()
-    if (token) {
-      request.headers.set('Authorization', `Bearer ${token}`)
-    }
-    return request
-  },
-}
+// A failed login or a failed refresh is a final answer: a 401 from /v1/auth/* must never
+// trigger a refresh (refreshing in response to a failed refresh would recurse).
+const AUTH_PATH_PREFIX = '/v1/auth/'
 
 export const authClient = createClient<paths>({ baseUrl, credentials: 'include' })
-authClient.use(authMiddleware)
+authClient.use(
+  createRetryMiddleware({
+    excludeFromRetry: (pathname) => pathname.startsWith(AUTH_PATH_PREFIX),
+  }),
+)
 
 export type AuthClient = typeof authClient
