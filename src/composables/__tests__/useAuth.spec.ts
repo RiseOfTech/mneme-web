@@ -77,6 +77,79 @@ describe('useAuth', () => {
     })
   })
 
+  describe('register', () => {
+    it('sets the access token and returns true on success', async () => {
+      const postMock = vi.fn<AnyAsyncFn>().mockResolvedValue({
+        data: { accessToken: 'jwt-new' },
+        error: undefined,
+        response: { ok: true, status: 201 } as Response,
+      })
+      const client = makeStubClient({ POST: postMock })
+
+      const auth = useAuth(client)
+      const result = await auth.register('new@example.com', 'password123')
+
+      expect(postMock).toHaveBeenCalledWith('/v1/auth/register', {
+        body: { email: 'new@example.com', password: 'password123' },
+      })
+      expect(result).toBe(true)
+      expect(getAccessToken()).toBe('jwt-new')
+      expect(isAuthenticated.value).toBe(true)
+      expect(auth.submitError.value).toBeNull()
+      expect(auth.submitting.value).toBe(false)
+    })
+
+    it('returns false with an email-taken message on a 409, and leaves the session anonymous', async () => {
+      const client = makeStubClient({
+        POST: vi.fn<AnyAsyncFn>().mockResolvedValue({
+          data: undefined,
+          error: { title: 'email_taken' },
+          response: { ok: false, status: 409 } as Response,
+        }),
+      })
+
+      const auth = useAuth(client)
+      const result = await auth.register('taken@example.com', 'password123')
+
+      expect(result).toBe(false)
+      expect(auth.submitError.value).toMatch(/already registered/i)
+      expect(isAuthenticated.value).toBe(false)
+      expect(getAccessToken()).toBeNull()
+    })
+
+    it('returns false with a validation message on a 400, and leaves the session anonymous', async () => {
+      const client = makeStubClient({
+        POST: vi.fn<AnyAsyncFn>().mockResolvedValue({
+          data: undefined,
+          error: { title: 'validation_failed' },
+          response: { ok: false, status: 400 } as Response,
+        }),
+      })
+
+      const auth = useAuth(client)
+      const result = await auth.register('bad@example.com', 'password123')
+
+      expect(result).toBe(false)
+      expect(auth.submitError.value).not.toMatch(/already registered/i)
+      expect(isAuthenticated.value).toBe(false)
+      expect(getAccessToken()).toBeNull()
+    })
+
+    it('shows the network message, not the 409/400 copy, when the client rejects', async () => {
+      const client = makeStubClient({
+        POST: vi.fn<AnyAsyncFn>().mockRejectedValue(new TypeError('Failed to fetch')),
+      })
+
+      const auth = useAuth(client)
+      const result = await auth.register('new@example.com', 'password123')
+
+      expect(result).toBe(false)
+      expect(auth.submitError.value).toBe("Couldn't reach the server. Try again.")
+      expect(isAuthenticated.value).toBe(false)
+      expect(auth.submitting.value).toBe(false)
+    })
+  })
+
   describe('logout', () => {
     it('clears the session on a successful call', async () => {
       setAccessToken('jwt-abc')

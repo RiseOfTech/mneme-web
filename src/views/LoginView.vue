@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
@@ -74,6 +74,10 @@ async function onSubmit() {
         <button type="submit" :disabled="submitting">Sign in</button>
       </div>
     </form>
+
+    <p class="alt-action">
+      Don't have an account? <RouterLink to="/register">Create one</RouterLink>
+    </p>
   </section>
 </template>
 
@@ -173,5 +177,16 @@ input:focus-visible {
   border-color: var(--color-haze);
   color: var(--color-haze);
   cursor: not-allowed;
+}
+
+.alt-action {
+  font-family: var(--font-mono);
+  font-size: var(--text-eyebrow);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-haze);
+}
+
+.alt-action a {
+  color: var(--color-ink);
 }
 </style>
