@@ -1,0 +1,286 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mneme Auth API",
+    "description": "Identity service for Mneme. HAND-WRITTEN from the integration brief because mneme-auth does not publish a contract yet. Replace wholesale once springdoc is added there; do not maintain both.",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081",
+      "description": "Local dev"
+    }
+  ],
+  "paths": {
+    "/v1/auth/register": {
+      "post": {
+        "tags": ["auth-controller"],
+        "summary": "Create an account and sign in",
+        "description": "Also sets the refresh token as an HttpOnly cookie scoped to /v1/auth. The refresh token never appears in the response body.",
+        "operationId": "register",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequestDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created and signed in",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponseDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetail" }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetail" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "tags": ["auth-controller"],
+        "summary": "Sign in",
+        "description": "Also sets the refresh token as an HttpOnly cookie scoped to /v1/auth. The refresh token never appears in the response body.",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequestDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponseDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetail" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials. Deliberately does not distinguish a wrong email from a wrong password.",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetail" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "tags": ["auth-controller"],
+        "summary": "Exchange the refresh cookie for a new access token",
+        "description": "Takes no body. The browser sends the HttpOnly refresh cookie automatically, so the request must be made with credentials included. The refresh token is rotated: a new cookie is set. Reusing a consumed refresh token revokes the whole session, so at most one refresh may be in flight at a time.",
+        "operationId": "refresh",
+        "responses": {
+          "200": {
+            "description": "New access token issued and refresh cookie rotated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponseDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, revoked, or already-consumed refresh token. No body."
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "tags": ["auth-controller"],
+        "summary": "Sign out and clear the refresh cookie",
+        "description": "Always succeeds; safe to call unconditionally. Takes no body and returns none.",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          }
+        }
+      }
+    },
+    "/v1/profile": {
+      "get": {
+        "tags": ["profile-controller"],
+        "summary": "Get the authenticated caller's profile",
+        "operationId": "getProfile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProfileResponseDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or invalid access token. No body."
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "put": {
+        "tags": ["profile-controller"],
+        "summary": "Update the authenticated caller's profile",
+        "operationId": "updateProfile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProfileRequestDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProfileResponseDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetail" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or invalid access token. No body."
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegisterRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Normalised server-side: trimmed and lowercased."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "description": "No composition requirements."
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "LoginRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Short-lived JWT, 15 minutes. Sent to both services as an Authorization bearer header. Held in memory only; never persisted."
+          }
+        },
+        "required": ["accessToken"]
+      },
+      "ProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Optional and not unique; two users may share one."
+          }
+        },
+        "required": ["userId", "nickname"]
+      },
+      "UpdateProfileRequestDto": {
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Trimmed server-side; case preserved."
+          }
+        },
+        "required": ["nickname"]
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "description": "RFC 7807. A machine-readable code lives under properties.code, e.g. validation_failed, email_taken, invalid_credentials.",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer", "format": "int32" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string", "format": "uri" },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

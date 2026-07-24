@@ -67,38 +67,75 @@ controller → service → gateway split.
 
 ## Authentication
 
-First milestone: a **dev bearer token**, with no registration or login UI.
+Real authentication against the auth service (`mneme-auth`), a separate service from
+`mneme-core`. Login obtains a short-lived JWT; there is no refresh in this milestone — a
+page reload or a token expiry (15 minutes) sends the user back to `/login`. That is expected,
+not a defect; refresh is a later slice.
 
-- **Where the token lives:** an environment variable, `VITE_DEV_TOKEN`, in `.env.local`
-  (git-ignored).
-- **How it reaches each request:** an `openapi-fetch` **middleware** (`onRequest` hook) —
-  an interceptor, equivalent to a Spring `HandlerInterceptor` or an OkHttp interceptor. It
-  attaches `Authorization: Bearer <token>` to every outgoing request in one place; no call
-  site repeats the header.
+**Two API clients**, both built with `openapi-fetch`:
+
+- `src/api/client.ts` — the core client, typed from `schema.d.ts` (generated from
+  `doc/openapi.json`). No `credentials` option; the core does not use cookies.
+- `src/api/authClient.ts` — the auth client, typed from `authSchema.d.ts` (generated from
+  `doc/auth-openapi.json`, which is **hand-written** pending a published contract from
+  `mneme-auth`; it is replaced wholesale when one lands, never hand-maintained alongside
+  generated types). Built with **`credentials: 'include'`**, required so the HttpOnly
+  refresh cookie travels with requests to the auth service.
+
+**Token storage — in memory only.** The access token lives in a module-scoped reactive
+state object, `src/auth/session.ts` — never `localStorage`, `sessionStorage`, or a cookie
+set by this app. The refresh token is an HttpOnly cookie owned entirely by the browser and
+the auth service; this client never reads, parses, or stores it. The JWT itself is never
+decoded — identity comes from calling the profile endpoint, not from inspecting the token.
+
+**How the token reaches each request:** both clients register the same shape of
+`onRequest` middleware — an interceptor, equivalent to a Spring `HandlerInterceptor` or an
+OkHttp interceptor. It reads the current access token from the session module and attaches
+`Authorization: Bearer <token>` when one exists; with no token, no header is sent. No call
+site repeats this logic.
+
+**State choice: a module-scoped reactive module, not Pinia, not a composable.** Auth state
+must be readable from non-component code — the API middleware and the router guard — and
+every reader must observe the same instance. A composable-per-caller would give each caller
+its own state; Pinia was considered and declined, as it was for session state: one store,
+no SSR, no plugin needs, doesn't earn its place for a single piece of cross-cutting state.
+This is the deliberate, named exception to "no module-level shared state" — `AGENTS.md` is
+amended accordingly. The module holds state only; it makes no API calls itself, so it stays
+importable from the API client without an import cycle (`client.ts` → session module; the
+session module imports nothing from `api/`).
 
 **Vite env exposure — important invariant.** Only `VITE_`-prefixed variables are exposed to
 client code, and they are **baked into the built bundle at build time** — visible to anyone
-who inspects it. This is acceptable for a local dev token. A real secret must never go in a
-`VITE_` variable; it would leak into the bundle.
-
-**Forward-compatible.** When a token-entry UI replaces the env var later, the injection
-point (the middleware) stays the same — only the *source* of the token changes (from an env
-var to reactive state). Deferring the UI now boxes us into nothing.
+who inspects it. `VITE_AUTH_BASE_URL` is a URL, not a secret, so this is fine. A real secret
+must never go in a `VITE_` variable; it would leak into the bundle. Nothing secret is ever
+baked in — the access token is runtime state, not a build-time value.
 
 ## Routing
 
 **`vue-router`**, added in the cards-list slice. `src/router/index.ts` creates the router
 with `createWebHistory()` (real URLs, no `#`) and these routes:
 
-- `/session` (name `session`) → `SessionView`
-- `/cards` (name `cards`) → `CardsView`
+- `/session` (name `session`, `meta: { requiresAuth: true }`) → `SessionView`
+- `/cards` (name `cards`, `meta: { requiresAuth: true }`) → `CardsView`
+- `/cards/new`, `/cards/:id/edit` (`meta: { requiresAuth: true }`) → `NewCardView`,
+  `EditCardView`
+- `/login` (name `login`, public) → `LoginView`
 - `/` → redirect to `/session`
 - A catch-all (`/:pathMatch(.*)*`) → redirect to `/session`. No 404 page.
 
+**A global navigation guard** (`router.beforeEach`) protects the app: routes are marked
+with `meta.requiresAuth`, not a hard-coded path list inside the guard. An unauthenticated
+visit to a protected route redirects to `/login`, preserving the intended destination as a
+`redirect` query param so `LoginView` can send the user back there on success. An
+authenticated visit to `/login` redirects to `/session`. The guard reads `isAuthenticated`
+from the session module — the same reactive source the API middleware reads.
+
 `App.vue` no longer renders `SessionView` directly. It renders a minimal nav
-(`<RouterLink>` to `/session` and `/cards`) plus `<RouterView />`, which renders whichever
-view the current route matches. The active link gets vue-router's automatic active class;
-one CSS rule styles it. No nav component, no layout system.
+(`<RouterLink>` to `/session` and `/cards`, plus a **sign-out** control) plus
+`<RouterView />`, which renders whichever view the current route matches. The nav is shown
+only when authenticated — a signed-out user sees `LoginView` alone. The active link gets
+vue-router's automatic active class; one CSS rule styles it. No nav component, no layout
+system.
 
 **Both views are eagerly imported — no lazy loading / route-level code splitting.** Two
 routes do not justify it (YAGNI); revisit if the app grows.
@@ -192,21 +229,27 @@ automatically — no manual teardown.
 src/
   api/
     schema.d.ts            # generated from openapi.json — do not hand-edit
-    client.ts              # createClient + auth middleware (the configured gateway)
+    authSchema.d.ts        # generated from doc/auth-openapi.json — do not hand-edit
+    client.ts              # createClient + auth middleware (the configured gateway) — core
+    authClient.ts          # createClient + auth middleware, credentials: 'include' — auth
+  auth/
+    session.ts             # module-scoped reactive auth state (access token, isAuthenticated)
   router/
-    index.ts               # createRouter + route table (session, cards, cards/new, cards/:id/edit, redirects)
+    index.ts               # createRouter + route table + beforeEach auth guard
   composables/
     useReviewSession.ts    # session state + logic; calls the API client
     useCards.ts            # cards list + single card + mutations; calls the API client
+    useAuth.ts             # login/logout operations over the session module
   views/
     SessionView.vue        # orchestrator; owns useReviewSession()
     CardsView.vue          # orchestrator; owns useCards()
     NewCardView.vue        # orchestrator; owns useCards(), renders CardForm
     EditCardView.vue       # orchestrator; owns useCards(), renders CardForm + delete
+    LoginView.vue          # orchestrator; owns useAuth(), email/password form
   components/
     ReviewCard.vue         # one card + progressive reveal (props in, events out)
     CardForm.vue           # word/translation/association/imageUrl fields (props in, events out)
-  App.vue                  # nav (RouterLink to /session, /cards) + RouterView
+  App.vue                  # nav (shown when authenticated) + RouterView
   main.ts                  # app entry; registers the router
 ```
 

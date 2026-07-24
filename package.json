@@ -11,6 +11,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "generate:api": "openapi-typescript doc/openapi.json -o src/api/schema.d.ts",
+    "generate:auth-api": "openapi-typescript doc/auth-openapi.json -o src/api/authSchema.d.ts",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
