@@ -1,6 +1,7 @@
 import { ref, readonly } from 'vue'
 import { authClient as defaultClient, type AuthClient } from '@/api/authClient'
-import { setAccessToken, clearSession } from '@/auth/session'
+import { setAccessToken } from '@/auth/session'
+import { endSession } from '@/auth/refresh'
 
 export function useAuth(client: AuthClient = defaultClient) {
   const submitting = ref(false)
@@ -36,7 +37,7 @@ export function useAuth(client: AuthClient = defaultClient) {
     } catch {
       // The user asked to leave; the session is cleared regardless.
     } finally {
-      clearSession()
+      endSession()
     }
   }
 

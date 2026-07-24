@@ -4,7 +4,8 @@ import CardsView from '@/views/CardsView.vue'
 import NewCardView from '@/views/NewCardView.vue'
 import EditCardView from '@/views/EditCardView.vue'
 import LoginView from '@/views/LoginView.vue'
-import { isAuthenticated } from '@/auth/session'
+import { isAuthenticated, session } from '@/auth/session'
+import { sessionReady } from '@/auth/refresh'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -32,7 +33,11 @@ export const routes: RouteRecordRaw[] = [
   { path: '/:pathMatch(.*)*', redirect: '/session' },
 ]
 
-export const authGuard: NavigationGuard = (to) => {
+export const authGuard: NavigationGuard = async (to) => {
+  if (session.status.value === 'resolving') {
+    await sessionReady
+  }
+
   if (to.meta.requiresAuth && !isAuthenticated.value) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
