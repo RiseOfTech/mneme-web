@@ -87,7 +87,12 @@ hand-write types that duplicate generated shapes.
   deferred (`ARCHITECTURE.md`). `vue-router` was added in the cards-list slice — do not add
   further routes speculatively; a route must be a genuinely distinct, bookmarkable
   navigable place, not a stand-in for in-screen state (see `ARCHITECTURE.md`'s "States are
-  still not screens"). No global store.
+  still not screens"). No global store, and no module-level shared state as a rule —
+  **except** the auth session (`src/auth/session.ts`, added in the auth-login slice): it
+  must be readable from non-component code (the API middleware, the router guard) with
+  every reader seeing the same instance, which a composable-per-caller can't give. Pinia
+  was considered for it and declined for the same reason as session state — see
+  `ARCHITECTURE.md`. Do not treat this as license for other module-level state.
 - Do not invent the folder layout; it is defined in `ARCHITECTURE.md`.
 
 ### Conventions
@@ -99,8 +104,9 @@ hand-write types that duplicate generated shapes.
 ### Environment & secrets
 
 Only `VITE_`-prefixed env vars reach client code, and they are **baked into the built
-bundle** — not secret. Use them only for non-secrets (the dev token in `.env.local`). Never
-put a real secret in a `VITE_` variable. `.env.local` is git-ignored; never commit it.
+bundle** — not secret. Use them only for non-secrets (e.g. `VITE_API_BASE_URL`,
+`VITE_AUTH_BASE_URL`). Never put a real secret in a `VITE_` variable — the access token is
+runtime auth state, not an env var. `.env.local` is git-ignored; never commit it.
 
 ## Testing
 

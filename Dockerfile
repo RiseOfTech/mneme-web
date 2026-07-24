@@ -8,8 +8,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # Baked in at build time: Vite inlines VITE_* vars into the bundle, they
-# are not read at container start. Never add VITE_DEV_TOKEN here — it is
-# a local dev convenience only and must not end up in the image.
+# are not read at container start.
 ARG VITE_API_BASE_URL=http://localhost:8080
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 

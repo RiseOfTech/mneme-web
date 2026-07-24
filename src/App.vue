@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { isAuthenticated } from '@/auth/session'
+import { useAuth } from '@/composables/useAuth'
+
+const router = useRouter()
+const { logout } = useAuth()
+
+async function onSignOut() {
+  await logout()
+  router.push('/login')
+}
 </script>
 
 <template>
   <div class="app-shell">
     <div class="noise-overlay" aria-hidden="true"></div>
-    <nav class="app-nav">
+    <nav v-if="isAuthenticated" class="app-nav">
       <RouterLink to="/session">Review</RouterLink>
       <span class="nav-separator" aria-hidden="true">·</span>
       <RouterLink to="/cards">Cards</RouterLink>
+      <span class="nav-separator" aria-hidden="true">·</span>
+      <button type="button" class="sign-out-button" @click="onSignOut">Sign out</button>
     </nav>
     <main class="content">
       <RouterView />
@@ -64,6 +76,23 @@ import { RouterLink, RouterView } from 'vue-router'
 
 .nav-separator {
   color: var(--color-haze-soft);
+}
+
+.sign-out-button {
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  padding-bottom: var(--nav-underline-gap);
+  border-bottom: 1px solid transparent;
+  color: var(--color-haze);
+  transition:
+    color var(--motion-duration) var(--motion-easing),
+    border-bottom-color var(--motion-duration) var(--motion-easing);
+}
+
+.sign-out-button:hover,
+.sign-out-button:focus-visible {
+  color: var(--color-ink);
 }
 
 .content {

@@ -37,7 +37,3 @@ docker build -t mneme-web:local --build-arg VITE_API_BASE_URL=https://api.exampl
 This means one image is fixed to one API URL. If that becomes a problem later (one image,
 several environments), the fix is a small runtime config file that nginx serves and the
 app fetches on startup — not needed yet.
-
-`VITE_DEV_TOKEN` is a local development convenience only. It must never be passed as a
-build argument or baked into an image — production builds have no token; authentication
-is the job of the upcoming registration service.
