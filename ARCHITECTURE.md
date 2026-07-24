@@ -178,6 +178,7 @@ with `createWebHistory()` (real URLs, no `#`) and these routes:
 - `/cards/new`, `/cards/:id/edit` (`meta: { requiresAuth: true }`) → `NewCardView`,
   `EditCardView`
 - `/login` (name `login`, public) → `LoginView`
+- `/register` (name `register`, public) → `RegisterView`
 - `/` → redirect to `/session`
 - A catch-all (`/:pathMatch(.*)*`) → redirect to `/session`. No 404 page.
 

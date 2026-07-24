@@ -31,6 +31,40 @@ export function useAuth(client: AuthClient = defaultClient) {
     }
   }
 
+  async function register(email: string, password: string): Promise<boolean> {
+    submitting.value = true
+    submitError.value = null
+
+    try {
+      const { data, error: err, response } = await client.POST('/v1/auth/register', {
+        body: { email, password },
+      })
+
+      if (response.status === 409) {
+        submitError.value = 'That email is already registered. Try signing in instead.'
+        return false
+      }
+
+      if (response.status === 400) {
+        submitError.value = 'Please check your details and try again.'
+        return false
+      }
+
+      if (err || !response.ok) {
+        submitError.value = 'Please check your details and try again.'
+        return false
+      }
+
+      setAccessToken(data.accessToken)
+      return true
+    } catch {
+      submitError.value = "Couldn't reach the server. Try again."
+      return false
+    } finally {
+      submitting.value = false
+    }
+  }
+
   async function logout(): Promise<void> {
     try {
       await client.POST('/v1/auth/logout')
@@ -45,6 +79,7 @@ export function useAuth(client: AuthClient = defaultClient) {
     submitting: readonly(submitting),
     submitError: readonly(submitError),
     login,
+    register,
     logout,
   }
 }

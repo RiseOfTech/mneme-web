@@ -66,8 +66,8 @@ ask for the word) is a later option, not part of the first version.
 **Current milestone — the first thin slice: complete one review session, end to end.**
 This proves the client↔core loop works:
 
-- Sign in against the auth service with real credentials (email + password), obtaining a
-  short-lived JWT held in memory.
+- Register a new account, or sign in against the auth service with real credentials
+  (email + password), obtaining a short-lived JWT held in memory.
 - Fetch the due cards, run the progressive reveal above, submit a grade, and advance
   until the session is empty.
 
@@ -76,7 +76,7 @@ This proves the client↔core loop works:
 **Deferred — later slices, deliberately not now:**
 
 - Card management (create / edit / delete) — the next slice after the session loop works.
-- Registration UI, token refresh, and startup session restore.
+- Token refresh, and startup session restore.
 - Reversed-direction quizzing (translation → word).
 - Settings, a statistics dashboard, gamification.
 - Offline mode, sync, push notifications.

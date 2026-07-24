@@ -4,6 +4,7 @@ import CardsView from '@/views/CardsView.vue'
 import NewCardView from '@/views/NewCardView.vue'
 import EditCardView from '@/views/EditCardView.vue'
 import LoginView from '@/views/LoginView.vue'
+import RegisterView from '@/views/RegisterView.vue'
 import { isAuthenticated, session } from '@/auth/session'
 import { sessionReady } from '@/auth/refresh'
 
@@ -29,6 +30,7 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   { path: '/login', name: 'login', component: LoginView },
+  { path: '/register', name: 'register', component: RegisterView },
   { path: '/', redirect: '/session' },
   { path: '/:pathMatch(.*)*', redirect: '/session' },
 ]
@@ -42,7 +44,7 @@ export const authGuard: NavigationGuard = async (to) => {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 
-  if (to.name === 'login' && isAuthenticated.value) {
+  if ((to.name === 'login' || to.name === 'register') && isAuthenticated.value) {
     return { path: '/session' }
   }
 
