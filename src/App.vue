@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { isAuthenticated } from '@/auth/session'
+import { isAuthenticated, session } from '@/auth/session'
 import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
@@ -15,16 +15,23 @@ async function onSignOut() {
 <template>
   <div class="app-shell">
     <div class="noise-overlay" aria-hidden="true"></div>
-    <nav v-if="isAuthenticated" class="app-nav">
-      <RouterLink to="/session">Review</RouterLink>
-      <span class="nav-separator" aria-hidden="true">·</span>
-      <RouterLink to="/cards">Cards</RouterLink>
-      <span class="nav-separator" aria-hidden="true">·</span>
-      <button type="button" class="sign-out-button" @click="onSignOut">Sign out</button>
-    </nav>
-    <main class="content">
-      <RouterView />
-    </main>
+
+    <div v-if="session.status.value === 'resolving'" class="state-loading">
+      <div class="loading-ring" aria-hidden="true"></div>
+    </div>
+
+    <template v-else>
+      <nav v-if="isAuthenticated" class="app-nav">
+        <RouterLink to="/session">Review</RouterLink>
+        <span class="nav-separator" aria-hidden="true">·</span>
+        <RouterLink to="/cards">Cards</RouterLink>
+        <span class="nav-separator" aria-hidden="true">·</span>
+        <button type="button" class="sign-out-button" @click="onSignOut">Sign out</button>
+      </nav>
+      <main class="content">
+        <RouterView />
+      </main>
+    </template>
   </div>
 </template>
 
@@ -43,6 +50,40 @@ async function onSignOut() {
   mix-blend-mode: soft-light;
   opacity: var(--overlay-noise-opacity);
   background-image: var(--overlay-noise);
+}
+
+.state-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.loading-ring {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+}
+
+.loading-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-flare);
+  animation: flare-pulse var(--motion-pulse-duration) ease-in-out infinite;
+}
+
+@keyframes flare-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 .app-nav {

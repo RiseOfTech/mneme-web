@@ -68,9 +68,9 @@ controller → service → gateway split.
 ## Authentication
 
 Real authentication against the auth service (`mneme-auth`), a separate service from
-`mneme-core`. Login obtains a short-lived JWT; there is no refresh in this milestone — a
-page reload or a token expiry (15 minutes) sends the user back to `/login`. That is expected,
-not a defect; refresh is a later slice.
+`mneme-core`. Login obtains a short-lived JWT (15 minutes). The token expiry is invisible
+to the user: a refresh cycle (below) renews it silently and a cold load restores the
+session from the refresh cookie before the router decides anything.
 
 **Two API clients**, both built with `openapi-fetch`:
 
@@ -109,6 +109,64 @@ client code, and they are **baked into the built bundle at build time** — visi
 who inspects it. `VITE_AUTH_BASE_URL` is a URL, not a secret, so this is fine. A real secret
 must never go in a `VITE_` variable; it would leak into the bundle. Nothing secret is ever
 baked in — the access token is runtime state, not a build-time value.
+
+### Refresh, retry, and startup restore
+
+**A third session status.** `session.ts`'s `status` is `'resolving' | 'anonymous' |
+'authenticated'`, initialised to `'resolving'`. A cold load genuinely doesn't know yet
+whether the refresh cookie will restore a session; conflating "not yet known" with "signed
+out" is exactly what would bounce a valid user to `/login` while the very first refresh is
+still in flight. `session.ts` still holds state only and imports nothing of ours.
+
+**`src/auth/refresh.ts`** is the only place allowed to call `/v1/auth/refresh` — direct
+calls from anywhere else are forbidden (enforced by convention, not by types). It exposes:
+
+- `refreshAccessToken(): Promise<string | null>` — **single-flight, by necessity, not as
+  an optimisation.** The auth service rotates the refresh token on every use and runs
+  strict reuse detection: a second `/v1/auth/refresh` call racing the first on the same
+  cookie looks like a replay and **revokes the whole session**. This happens naturally —
+  two screens' worth of requests 401 together and each would otherwise independently
+  decide to refresh. `refreshAccessToken` holds the in-flight promise in a module-scoped
+  variable; concurrent callers all await the same one. On success it calls
+  `setAccessToken`; on any failure (401, other HTTP failure, thrown error) it calls
+  `endSession()` and resolves `null`.
+- `endSession()` — the guarded way to sign out. It drops any in-flight refresh promise
+  (via a generation counter checked before a late-arriving success is committed) in
+  addition to clearing session state, so a sign-out that lands mid-refresh can't be
+  undone by a token that arrives a moment later. This is why it's a distinct export from
+  `session.ts`'s `clearSession` (state-reset only, no promise awareness) rather than the
+  same name doing more in one place and less in another: everything outside
+  `session.ts`/`refresh.ts` that needs to end a session — currently `useAuth.ts`'s
+  `logout()` — calls `endSession()`, never `clearSession()` directly.
+- `initSession(): Promise<void>` / `sessionReady: Promise<void>` — called once from
+  `main.ts` before the app mounts. It runs `refreshAccessToken()` and lets it set the
+  session either way, and can never throw or surface an error — a cold load with no
+  cookie is the normal signed-out case. `sessionReady` is what the router guard awaits.
+
+**Retry-once on the core client.** `client.ts` (never `authClient.ts` — its only
+token-bearing endpoint, profile, is a later slice, and a `401` from `/v1/auth/*` must
+never trigger a refresh; a failed login or failed refresh is a final answer) registers a
+middleware with both `onRequest` and `onResponse`. It matters that it's both: by the time
+`onResponse` sees a request, `fetch()` has already consumed its body stream, so
+`onRequest` clones the request *before* it's sent and stashes the clone (keyed by the
+request object itself, so nothing needs manual cleanup). On a `401`, `onResponse` calls
+`refreshAccessToken()`; if it returns a token, the stashed clone is reissued once with the
+new `Authorization` header, and that response replaces the `401`. A request that has
+already been retried carries a marker header, so it is never retried a second time — a
+401 → refresh → 401 loop is a bug, not a recovery path.
+
+**The router guard awaits startup restore.** `router/index.ts`'s `authGuard` is async: if
+`status === 'resolving'` it awaits `sessionReady` before applying the existing
+`requiresAuth` / already-authenticated-at-`/login` rules. Without this, the first
+navigation on a cold load would evaluate while the startup refresh is still in flight, see
+no token yet, and redirect a perfectly valid session to `/login`. `App.vue` mirrors this:
+while `status === 'resolving'` it renders a loading treatment instead of the nav or
+`RouterView`, so there's no flash of the login screen for a session that's about to
+restore.
+
+**Out of scope, deliberately:** no token persistence (still no `localStorage` /
+`sessionStorage`); no JWT decoding or `exp`-based pre-emptive refresh — refresh is
+reactive, triggered only by a `401`; no refresh scheduling, timers, or polling.
 
 ## Routing
 
@@ -234,6 +292,7 @@ src/
     authClient.ts          # createClient + auth middleware, credentials: 'include' — auth
   auth/
     session.ts             # module-scoped reactive auth state (access token, isAuthenticated)
+    refresh.ts             # single-flight refresh, retry-once support, startup restore
   router/
     index.ts               # createRouter + route table + beforeEach auth guard
   composables/

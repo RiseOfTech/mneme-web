@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setAccessToken, clearSession, isAuthenticated, getAccessToken, session } from '../session'
 
 describe('auth session module', () => {
@@ -36,5 +36,13 @@ describe('auth session module', () => {
 
     expect(otherImporter.getAccessToken()).toBe('shared-token')
     expect(otherImporter.isAuthenticated.value).toBe(true)
+  })
+
+  it('starts resolving on a fresh module load, before any clearSession/setAccessToken call', async () => {
+    vi.resetModules()
+    const fresh = await import('../session')
+
+    expect(fresh.session.status.value).toBe('resolving')
+    expect(fresh.isAuthenticated.value).toBe(false)
   })
 })

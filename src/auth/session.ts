@@ -1,9 +1,9 @@
 import { computed, readonly, ref } from 'vue'
 
-type Status = 'anonymous' | 'authenticated'
+type Status = 'resolving' | 'anonymous' | 'authenticated'
 
 const accessToken = ref<string | null>(null)
-const status = ref<Status>('anonymous')
+const status = ref<Status>('resolving')
 
 export function setAccessToken(token: string) {
   accessToken.value = token
