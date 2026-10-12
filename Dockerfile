@@ -11,6 +11,8 @@ RUN npm ci
 # are not read at container start.
 ARG VITE_API_BASE_URL=http://localhost:8080
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ARG VITE_AUTH_BASE_URL=http://localhost:8081
+ENV VITE_AUTH_BASE_URL=$VITE_AUTH_BASE_URL
 
 COPY . .
 RUN npm run build
